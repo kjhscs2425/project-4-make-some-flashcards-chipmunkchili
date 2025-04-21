@@ -135,9 +135,6 @@ def finish_the_lyric():
         number_options.append(index)
        
     while len(number_options) > 0:
-        # update_number_options()
-        # print(number_options)
-        # print(prompt_80s[lyric_index])
         number_index = choice(range(len(number_options)))
         number = number_options[number_index]
         if decade == "80s":
