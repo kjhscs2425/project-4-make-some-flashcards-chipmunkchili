@@ -35,6 +35,18 @@ prompt_80s = list(songs_80s.keys())
 answer_80s = list(songs_80s.values())
 
 
+def find_lyric_in_lyrics_list(lyrics_list, target_lyric):
+    for index, lyric in enumerate(lyrics_list):
+        if lyric == target_lyric:
+            return index
+    return None
+
+# lyric_index = find_lyric_in_lyrics_list(prompt_80s, target_lyric)
+# Add lyric_index to the end of number_options
+def update_number_options():
+        number_options.append(lyric_index)
+
+
 
 # 2010s set (10 cards)
 Roar = "I got the eye of the tiger, a fighter. Dancing through the fire. 'Cause I am a champion..."
@@ -60,88 +72,61 @@ songs_2010s = {
     Let_It_Go : "the cold never bothered me anyway",
     Someone_Like_You : "sometimes it hurts instead",
     Me : "you know there is a me",
-    Somebody_That_I_Used_To_Know : "now you're just somebody that i used to know"
+    Somebody_That_I_Used_To_Know : "that i used to know"
 }
 prompt_2010s = list(songs_2010s.keys())
 answer_2010s = list(songs_2010s.values())
 
 
-number_options = None
+# number_options = None
+lyric_options_80s = None
+lyric_options_2010s = None
+
 correct_questions = []
 incorrect_questions = []
 
 def set():
-    global number_options
-    number_options = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    # global number_options
+    global lyric_options_80s
+    # number_options = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    # number_options = [0, 1, 2]
+    lyric_options_80s = []
+    for i in range(3):
+        prompt_80s[i]
+    lyric_options_2010s = []
+    for i in range(3):
+        lyric_options_2010s[i]
     return input("Which decade set do you want to play? (80s, 2010s) ")
 decade = set()
 
-
-def read_past_questions(filename, decade):
-    if not os.path.isfile(filename):
-        return []
-    
-    with open(filename, "r") as f:
-        all_questions = json.load(f)
-    key = f"lyrics_{decade}"
-    if key in all_questions.keys():
-        decade_questions = all_questions[key]
-    else:
-        decade_questions = []
-    return decade_questions
-    
-def find_lyric_in_lyrics_list(lyrics_list, target_lyric):
-    for index, lyric in enumerate(lyrics_list):
-        if lyric == target_lyric:
-            return index
-    return None
-
-
 def update_file(filename, new_information, set):
-    key = f"lyrics_{set}"
     if os.path.isfile(filename):
         with open(filename, "r") as f:
             old_stats = json.load(f)
         new_stats = old_stats
-        
-        if key in new_stats.keys():
-            new_stats[key].append(new_information)
-        else:
-            new_stats[key] = [new_information]
+        new_stats[f"lyrics_{set}"].append(new_information)
+
     else:
-        new_stats = {key: [new_information]}
+        new_stats = {f"lyrics_{set}": [new_information]}
     with open(filename, "w") as f:
         json.dump(new_stats, f, indent = 2)
 
 def finish_the_lyric():
     global number_options
     global decade
-    
-    correct_past = read_past_questions("correct.json", decade)
-    incorrect_past = read_past_questions("incorrect.json", decade)
-
-    for lyric in correct_past: 
-        while lyric in incorrect_past:
-            index = find_lyric_in_lyrics_list(incorrect_past, lyric)
-            del incorrect_past[index] #incorrect just things that were never answered correctly
-
+    global lyric_options_80s
+    global lyric_options_2010s
     if decade == "80s":
-        questions = prompt_80s
-    elif decade == "2010s":
-        questions = prompt_2010s
-
-    for lyric in incorrect_past:    
-        index = find_lyric_in_lyrics_list(questions, lyric)
-        number_options.append(index)
-       
-    while len(number_options) > 0:
-        number_index = choice(range(len(number_options)))
-        number = number_options[number_index]
-        if decade == "80s":
-            prompt = prompt_80s[number]
+        while len(lyric_options_80s) > 0:
+            # update_number_options()
+            print(lyric_options_80s)
+            # print(prompt_80s[lyric_index])
+            # number_index = choice(range(len(number_options)))
+            prompt = choice(lyric_options_80s)
+            # number = number_options[number_index]
             lyric = input(prompt)
-            del number_options[number_index]
-            if lyric == answer_80s[number]:
+            del lyric_options_80s[prompt]
+            if lyric == songs_80s[prompt]:#answer_80s[number]:
                 print("Correct! ✅")
                 update_file("correct.json", prompt, "80s")
                 correct_questions.append(prompt)
@@ -150,11 +135,12 @@ def finish_the_lyric():
                 print("Incorrect ❌")
                 update_file("incorrect.json", prompt, "80s")
                 incorrect_questions.append(prompt)
-        elif decade == "2010s":
-            prompt = prompt_2010s[number]
+    elif decade == "2010s":
+        while len(lyric_options_2010s) > 0:
+            prompt = choice(lyric_options_2010s)#prompt_2010s[number]
             lyric = input(prompt)
-            del number_options[number_index]
-            if lyric == answer_2010s[number]:
+            del lyric_options_2010s[prompt]
+            if lyric == lyric_options_2010s[prompt]:
                 print("Correct! ✅")
                 update_file("correct.json", prompt, "2010s")
                 correct_questions.append(prompt)
@@ -163,8 +149,6 @@ def finish_the_lyric():
                 print("Incorrect ❌")
                 update_file("incorrect.json", prompt, "2010s")
                 incorrect_questions.append(prompt)
-        else:
-            break
 
     num_correct = len(correct_questions)
     num_incorrect = len(incorrect_questions)
@@ -181,19 +165,17 @@ def finish_the_lyric():
 
 def summary_stats(filename, status, set):
     with open(filename, "r") as f:
-        past_stats = json.load(f)
-    key = f"lyrics_{set}"
-    if key in past_stats.keys():
-        questions = past_stats[key]
-        print(f"\n{status} PAST {set} questions:")
-        lyric_counts = {}
-        for lyric in questions:
-            if lyric in lyric_counts:
-                lyric_counts[lyric] += 1
-            else:
-                lyric_counts[lyric] = 1
-        for lyric in lyric_counts:
-            print(f"{lyric} (x{lyric_counts[lyric]})")
+            past_stats = json.load(f)
+    questions = past_stats[f"lyrics_{set}"]
+    print(f"\n{status} PAST {set} questions:")
+    lyric_counts = {}
+    for lyric in questions:
+        if lyric in lyric_counts:
+            lyric_counts[lyric] += 1
+        else:
+            lyric_counts[lyric] = 1
+    for lyric in lyric_counts:
+        print(f"{lyric} (x{lyric_counts[lyric]})")
 
 
 if os.path.isfile("correct.json") and os.path.isfile("incorrect.json"):
@@ -204,3 +186,8 @@ if os.path.isfile("correct.json") and os.path.isfile("incorrect.json"):
     summary_stats("incorrect.json", "Incorrect 😢", "2010s")
 else:
     finish_the_lyric()
+
+# TO DO:
+# make flashcards change based on right/wrong summary
+
+#THIS IS DR. EB'S IDEA --> REPLACE NUMBER SYSTEM WITH THE LYRICS THEMSELVES
